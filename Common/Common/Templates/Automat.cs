@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
@@ -7,7 +8,6 @@ namespace Common
 {
     public class Automat<T>
     {
-
         #region Делегады переходов
 
         /// <summary>
@@ -15,15 +15,13 @@ namespace Common
         /// </summary>
         /// <param name="oldSt">Состояние из которого происходит выход.</param>
         /// <param name="newSt">Состояние в которое происходит вход.</param>
-        /// <returns>Отменить переход.</returns>
-        public delegate bool OnChangingStateDelegate(T oldSt, T newSt);
+        public delegate void OnChangingStateDelegate(T oldSt, T newSt, CancelEventArgs cancelEventArgs);
 
         /// <summary>
         /// Делегат выполняемый перед переходом в указанное состояние.
         /// </summary>
         /// <param name="state">Состояние в которое происходит вход.</param>
-        /// <returns>Отменить переход.</returns>
-        public delegate bool OnEntryDelegate(T state);
+        public delegate void OnEntryDelegate(T state, CancelEventArgs cancelEventArgs);
 
         /// <summary>
         /// Делегат выполняемый после выхода из указанного состояния.
@@ -77,11 +75,20 @@ namespace Common
             var сhangingStateDelegates = GetDelegates(_OnChangingStateDelegates, oldState, newState);
             var entryStateDelegates = GetDelegates(_OnEntryDelegates, newState);
 
-            bool cancelChangeExist = сhangingStateDelegates.Any(d => d(oldState, newState));
-            if(cancelChangeExist || (сhangingStateDelegates.Count() == 0 && !ChangeStateIfNotRegistered)) return false;
+            if (сhangingStateDelegates.Count() == 0 && !ChangeStateIfNotRegistered) return false;
+            foreach (var item in сhangingStateDelegates)
+            {
+                CancelEventArgs cancelEventArgs = new CancelEventArgs();
+                item(oldState, newState, cancelEventArgs);
+                if (cancelEventArgs.Cancel) return false;
+            }
 
-            bool cancelEntryState = entryStateDelegates.Any(d => d(newState));
-            if(cancelEntryState) return false;
+            foreach (var item in entryStateDelegates)
+            {
+                CancelEventArgs cancelEventArgs = new CancelEventArgs();
+                item(newState, cancelEventArgs);
+                if (cancelEventArgs.Cancel) return false;
+            }
 
             State = newState;
             GetDelegates(_OnExitDelegates, oldState).ToList().ForEach(d => d(oldState));
@@ -96,7 +103,7 @@ namespace Common
         /// </summary>
         /// <param name="oldST">Состояние из которого происходит выход.</param>
         /// <param name="newSt">Состояние в которое происходит вход.</param>
-        /// <param name="changingStateDelegate">Метод выполняемый перед переходом. Если результат выполнения true - происходит отмена перехода.</param>
+        /// <param name="changingStateDelegate">Метод выполняемый перед переходом.</param>
         /// <returns></returns>
         public Automat<T> AddChangingState(T oldST, T newSt, OnChangingStateDelegate changingStateDelegate)
         {
@@ -108,7 +115,7 @@ namespace Common
         /// Добавляет событие происходящее перед переходом в указанное состояние.
         /// </summary>
         /// <param name="state">Состояние в которое происходит переход.</param>
-        /// <param name="onEntryDelegate">Метод выполняемый при входе в указанное состояние. Если результат выполнения true - происходит отмена перехода.</param>
+        /// <param name="onEntryDelegate">Метод выполняемый при входе в указанное состояние.</param>
         /// <returns></returns>
         public Automat<T> AddOnEntryState(T state, OnEntryDelegate onEntryDelegate)
         {

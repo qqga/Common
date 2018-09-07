@@ -41,6 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\ExpressionPredicateBuilder.cs" />
+    <Compile Include="Log\TraceListenerLog\TraceListenerLog.cs" />
+    <Compile Include="Log\TraceListenerLog\TraceListenerSqlLog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Templates\Automat.cs" />
   </ItemGroup>

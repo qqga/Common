@@ -57,8 +57,8 @@ namespace Common
         ///  если false то для возможности перехода необходимо его регистрировать методом AddChangingState.</param>
         public Automat(T initState = default(T), bool changeStateIfNotRegistered = true)
         {
-            SetState(initState);
             ChangeStateIfNotRegistered = changeStateIfNotRegistered;
+            SetState(initState);            
         }
 
         #region Методы
